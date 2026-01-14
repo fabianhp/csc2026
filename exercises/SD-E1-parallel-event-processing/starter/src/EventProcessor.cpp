@@ -34,7 +34,7 @@ void EventProcessor::processEvents(const std::vector<Event>& events) {
     for (size_t i = 0; i < events.size(); ++i) {
         for (const auto& particle : events[i].particles) {
             // Race condition: shared variables updated by multiple threads
-            tracks++;
+            tracks += 1;
             energy += particle.energy();
         }
     }
