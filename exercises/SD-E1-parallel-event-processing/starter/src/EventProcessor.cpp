@@ -29,18 +29,24 @@ void EventProcessor::processEvents(const std::vector<Event>& events) {
     double energy = 0.0;
 
 #ifdef CSC2026_USE_OPENMP
-#pragma omp parallel for reduction(+:tracks, energy)
-#endif
-    for (size_t i = 0; i < events.size(); ++i) {
-        for (const auto& particle : events[i].particles) {
-            // Race condition: shared variables updated by multiple threads
-            tracks += 1;
-            energy += particle.energy();
-        }
-    }
+struct Totals { int tracks; double energy; };
+std::vector<Totals> totals(omp_get_max_threads(), Totals{0, 0.0});
 
-    m_totalTracks += tracks;
-    m_totalEnergy += energy;
+#pragma omp parallel
+{
+  const int tid = omp_get_thread_num();
+  #pragma omp for
+  for (size_t i = 0; i < events.size(); ++i) {
+    for (const auto& p : events[i].particles) {
+      totals[tid].tracks += 1;
+      totals[tid].energy += p.energy();
+    }
+  }
+}
+
+for (const auto& t : totals) {
+  tracks += t.tracks;
+  energy += t.energy;
 }
 
 void EventProcessor::reset() {
