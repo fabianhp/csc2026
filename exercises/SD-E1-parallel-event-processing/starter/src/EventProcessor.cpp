@@ -29,7 +29,7 @@ void EventProcessor::processEvents(const std::vector<Event>& events) {
     double energy = 0.0;
 
 #ifdef CSC2026_USE_OPENMP
-struct Totals { int tracks; double energy; };
+struct alignas(64) Totals { int tracks; double energy; };
 std::vector<Totals> totals(omp_get_max_threads(), Totals{0, 0.0});
 
 #pragma omp parallel
